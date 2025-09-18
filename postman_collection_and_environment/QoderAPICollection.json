@@ -1,0 +1,2438 @@
+{
+	"info": {
+		"_postman_id": "202b87b2-8a4d-44a4-9e04-051830a6f3e4",
+		"name": "Qoder API - CRUD & JWT Practice",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "15491437",
+		"_collection_link": "https://red-rocket-105605.postman.co/workspace/Practice_Workspace~59804d2c-107c-4513-bada-3bb125a4149c/collection/15491437-202b87b2-8a4d-44a4-9e04-051830a6f3e4?action=share&source=collection_link&creator=15491437"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Register User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();\r",
+									"\r",
+									"\r",
+									"//Save token in env var\r",
+									"\r",
+									"pm.environment.set(\"registeredToken\", jsonData.token);\r",
+									"\r",
+									"//Save UserName\r",
+									"// grab the value that $randomUserName produced\r",
+									"const userName = pm.request.body.raw.match(/\"username\"\\s*:\\s*\"([^\"]+)\"/)[1];\r",
+									"// save it as a collection variable\r",
+									"pm.collectionVariables.set('username', userName);\r",
+									"\r",
+									"\r",
+									"\r",
+									"//Tests  \r",
+									"\r",
+									"//Validate data types of body data\r",
+									"pm.test(\"Validate data types of the body\", () => {\r",
+									"    // Data Types: check first item for expected fields\r",
+									"    console.log();\r",
+									"    pm.expect(jsonData.message).to.be.a('string');\r",
+									"     console.log(\"Message\",jsonData.message);\r",
+									"    pm.expect(jsonData.user.id).to.be.a('number');\r",
+									"     console.log(\"User ID\",jsonData.user.id);\r",
+									"    pm.expect(jsonData.user.username).to.be.a('string');\r",
+									"     console.log(\"User Name\",jsonData.user.username);\r",
+									" \r",
+									"     console.log();  \r",
+									"     console.log(\"Validate data types of the body:\");\r",
+									"     console.log(\"Data types of all items in the body are valid\");\r",
+									"});\r",
+									"\r",
+									"\r",
+									"\r",
+									"//  Log Summary Info\r",
+									"console.log(\"Status Code:\", pm.response.code);\r",
+									"console.log(\"Response Time:\", pm.response.responseTime + \"ms\");\r",
+									"console.log(\"Response Size:\", pm.response.size().body + \" bytes\");\r",
+									"console.log(\"Response Body:\", pm.response.text());\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\" : \"{{random_fullname}}\", \r\n    \"password\" : \"password123\"\r\n\r\n\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BaseURL}}/register",
+							"host": [
+								"{{BaseURL}}"
+							],
+							"path": [
+								"register"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							"// 1.  random full name for Register User\r",
+							"const randomFullName = pm.variables.replaceIn(\"{{$randomUserName}}\");\r",
+							"pm.variables.set(\"random_fullname\", randomFullName);\r",
+							"\r",
+							"\r",
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							"// Import Ajv\r",
+							"const Ajv = require('ajv');\r",
+							"const ajv = new Ajv({ allErrors: true });\r",
+							"\r",
+							"// JSON Schema for response\r",
+							"const authenticationSchema = \r",
+							"{\r",
+							"    \"$schema\": \"http://json-schema.org/draft-07/schema#\",\r",
+							"    \"$id\": \"http://json-schema.org/draft-07/schema#\",\r",
+							"    \"title\": \"Core schema meta-schema\",\r",
+							"    \"definitions\": {\r",
+							"        \"schemaArray\": {\r",
+							"            \"type\": \"array\",\r",
+							"            \"minItems\": 1,\r",
+							"            \"items\": { \"$ref\": \"#\" }\r",
+							"        },\r",
+							"        \"nonNegativeInteger\": {\r",
+							"            \"type\": \"integer\",\r",
+							"            \"minimum\": 0\r",
+							"        },\r",
+							"        \"nonNegativeIntegerDefault0\": {\r",
+							"            \"allOf\": [\r",
+							"                { \"$ref\": \"#/definitions/nonNegativeInteger\" },\r",
+							"                { \"default\": 0 }\r",
+							"            ]\r",
+							"        },\r",
+							"        \"simpleTypes\": {\r",
+							"            \"enum\": [\r",
+							"                \"array\",\r",
+							"                \"boolean\",\r",
+							"                \"integer\",\r",
+							"                \"null\",\r",
+							"                \"number\",\r",
+							"                \"object\",\r",
+							"                \"string\"\r",
+							"            ]\r",
+							"        },\r",
+							"        \"stringArray\": {\r",
+							"            \"type\": \"array\",\r",
+							"            \"items\": { \"type\": \"string\" },\r",
+							"            \"uniqueItems\": true,\r",
+							"            \"default\": []\r",
+							"        }\r",
+							"    },\r",
+							"    \"type\": [\"object\", \"boolean\"],\r",
+							"    \"properties\": {\r",
+							"        \"$id\": {\r",
+							"            \"type\": \"string\",\r",
+							"            \"format\": \"uri-reference\"\r",
+							"        },\r",
+							"        \"$schema\": {\r",
+							"            \"type\": \"string\",\r",
+							"            \"format\": \"uri\"\r",
+							"        },\r",
+							"        \"$ref\": {\r",
+							"            \"type\": \"string\",\r",
+							"            \"format\": \"uri-reference\"\r",
+							"        },\r",
+							"        \"$comment\": {\r",
+							"            \"type\": \"string\"\r",
+							"        },\r",
+							"        \"title\": {\r",
+							"            \"type\": \"string\"\r",
+							"        },\r",
+							"        \"description\": {\r",
+							"            \"type\": \"string\"\r",
+							"        },\r",
+							"        \"default\": true,\r",
+							"        \"readOnly\": {\r",
+							"            \"type\": \"boolean\",\r",
+							"            \"default\": false\r",
+							"        },\r",
+							"        \"examples\": {\r",
+							"            \"type\": \"array\",\r",
+							"            \"items\": true\r",
+							"        },\r",
+							"        \"multipleOf\": {\r",
+							"            \"type\": \"number\",\r",
+							"            \"exclusiveMinimum\": 0\r",
+							"        },\r",
+							"        \"maximum\": {\r",
+							"            \"type\": \"number\"\r",
+							"        },\r",
+							"        \"exclusiveMaximum\": {\r",
+							"            \"type\": \"number\"\r",
+							"        },\r",
+							"        \"minimum\": {\r",
+							"            \"type\": \"number\"\r",
+							"        },\r",
+							"        \"exclusiveMinimum\": {\r",
+							"            \"type\": \"number\"\r",
+							"        },\r",
+							"        \"maxLength\": { \"$ref\": \"#/definitions/nonNegativeInteger\" },\r",
+							"        \"minLength\": { \"$ref\": \"#/definitions/nonNegativeIntegerDefault0\" },\r",
+							"        \"pattern\": {\r",
+							"            \"type\": \"string\",\r",
+							"            \"format\": \"regex\"\r",
+							"        },\r",
+							"        \"additionalItems\": { \"$ref\": \"#\" },\r",
+							"        \"items\": {\r",
+							"            \"anyOf\": [\r",
+							"                { \"$ref\": \"#\" },\r",
+							"                { \"$ref\": \"#/definitions/schemaArray\" }\r",
+							"            ],\r",
+							"            \"default\": true\r",
+							"        },\r",
+							"        \"maxItems\": { \"$ref\": \"#/definitions/nonNegativeInteger\" },\r",
+							"        \"minItems\": { \"$ref\": \"#/definitions/nonNegativeIntegerDefault0\" },\r",
+							"        \"uniqueItems\": {\r",
+							"            \"type\": \"boolean\",\r",
+							"            \"default\": false\r",
+							"        },\r",
+							"        \"contains\": { \"$ref\": \"#\" },\r",
+							"        \"maxProperties\": { \"$ref\": \"#/definitions/nonNegativeInteger\" },\r",
+							"        \"minProperties\": { \"$ref\": \"#/definitions/nonNegativeIntegerDefault0\" },\r",
+							"        \"required\": { \"$ref\": \"#/definitions/stringArray\" },\r",
+							"        \"additionalProperties\": { \"$ref\": \"#\" },\r",
+							"        \"definitions\": {\r",
+							"            \"type\": \"object\",\r",
+							"            \"additionalProperties\": { \"$ref\": \"#\" },\r",
+							"            \"default\": {}\r",
+							"        },\r",
+							"        \"properties\": {\r",
+							"            \"type\": \"object\",\r",
+							"            \"additionalProperties\": { \"$ref\": \"#\" },\r",
+							"            \"default\": {}\r",
+							"        },\r",
+							"        \"patternProperties\": {\r",
+							"            \"type\": \"object\",\r",
+							"            \"additionalProperties\": { \"$ref\": \"#\" },\r",
+							"            \"propertyNames\": { \"format\": \"regex\" },\r",
+							"            \"default\": {}\r",
+							"        },\r",
+							"        \"dependencies\": {\r",
+							"            \"type\": \"object\",\r",
+							"            \"additionalProperties\": {\r",
+							"                \"anyOf\": [\r",
+							"                    { \"$ref\": \"#\" },\r",
+							"                    { \"$ref\": \"#/definitions/stringArray\" }\r",
+							"                ]\r",
+							"            }\r",
+							"        },\r",
+							"        \"propertyNames\": { \"$ref\": \"#\" },\r",
+							"        \"const\": true,\r",
+							"        \"enum\": {\r",
+							"            \"type\": \"array\",\r",
+							"            \"items\": true,\r",
+							"            \"minItems\": 1,\r",
+							"            \"uniqueItems\": true\r",
+							"        },\r",
+							"        \"type\": {\r",
+							"            \"anyOf\": [\r",
+							"                { \"$ref\": \"#/definitions/simpleTypes\" },\r",
+							"                {\r",
+							"                    \"type\": \"array\",\r",
+							"                    \"items\": { \"$ref\": \"#/definitions/simpleTypes\" },\r",
+							"                    \"minItems\": 1,\r",
+							"                    \"uniqueItems\": true\r",
+							"                }\r",
+							"            ]\r",
+							"        },\r",
+							"        \"format\": { \"type\": \"string\" },\r",
+							"        \"contentMediaType\": { \"type\": \"string\" },\r",
+							"        \"contentEncoding\": { \"type\": \"string\" },\r",
+							"        \"if\": {\"$ref\": \"#\"},\r",
+							"        \"then\": {\"$ref\": \"#\"},\r",
+							"        \"else\": {\"$ref\": \"#\"},\r",
+							"        \"allOf\": { \"$ref\": \"#/definitions/schemaArray\" },\r",
+							"        \"anyOf\": { \"$ref\": \"#/definitions/schemaArray\" },\r",
+							"        \"oneOf\": { \"$ref\": \"#/definitions/schemaArray\" },\r",
+							"        \"not\": { \"$ref\": \"#\" }\r",
+							"    },\r",
+							"    \"default\": true\r",
+							"};\r",
+							"\r",
+							"\r",
+							"// Run Ajv validation\r",
+							"const validate = ajv.compile(authenticationSchema);\r",
+							"const jsonData = pm.response.json();\r",
+							"const valid = validate(jsonData);\r",
+							"\r",
+							"pm.test(\"Schema Validation using Ajv (Folder Level)\", function () {\r",
+							"  pm.expect(valid, JSON.stringify(validate.errors)).to.be.true;\r",
+							"});"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "CRUD Items",
+			"item": [
+				{
+					"name": "Create New Item",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();\r",
+									"\r",
+									"//Saving booking ID\r",
+									"pm.environment.set(\"idNum\", jsonData.idNum);\r",
+									"\r",
+									"\r",
+									"//Tests  \r",
+									"\r",
+									"//Check Message\r",
+									"pm.test(\"Validate Message\", () => {\r",
+									"    // Check presence\r",
+									"    pm.expect(jsonData.message).to.exist;\r",
+									"    // Check types\r",
+									"    pm.expect(jsonData.message).to.be.a(\"string\");\r",
+									"});\r",
+									"\r",
+									"//Check response is object\r",
+									"pm.test(\"Response data is a single object\", () => {\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response).to.have.property('data').that.is.an('object');\r",
+									"    });\r",
+									"\r",
+									"\r",
+									"// Validate data types of the body\r",
+									"pm.test(\"Validate response data types\", () => {\r",
+									"    const res = pm.response.json();\r",
+									"    const item = res.data;          // object\r",
+									"    pm.expect(item.id).to.be.a('number');\r",
+									"    pm.expect(item.name).to.be.a('string');\r",
+									"    pm.expect(item.description).to.be.a('string');\r",
+									"    pm.expect(item.price).to.be.a('number');\r",
+									"    pm.expect(item.category).to.be.a('string');\r",
+									"    pm.expect(item.createdBy).to.be.a('number');\r",
+									"    pm.expect(item.createdAt).to.be.a('string');\r",
+									"    pm.expect(item.updatedAt).to.be.a('string');\r",
+									"});\r",
+									"\r",
+									"\r",
+									"\r",
+									"//  Log Summary Info\r",
+									"console.log(\"Status Code:\", pm.response.code);\r",
+									"console.log(\"Response Time:\", pm.response.responseTime + \"ms\");\r",
+									"console.log(\"Response Size:\", pm.response.size().body + \" bytes\");\r",
+									"console.log();\r",
+									"\r",
+									"\r",
+									"//Response Body\r",
+									"console.log(\"Message\", jsonData.message);\r",
+									"console.log();"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"{{name}}\",\r\n    \"description\": \"{{description}}\",\r\n    \"price\": {{price}},\r\n    \"category\": \"{{category}}\"\r\n}\r\n\r\n\r\n/*\r\n{\r\n    \"name\": \"{{random_fullname}}\",\r\n    \"description\": \"{{random_description}}\",\r\n    \"price\": {{random_price}},\r\n    \"category\": \"{{random_category}}\"\r\n}\r\n\r\n*/",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BaseURL}}/items",
+							"host": [
+								"{{BaseURL}}"
+							],
+							"path": [
+								"items"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "All Items",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();\r",
+									"\r",
+									"/* ---- 1. grab list ---- */\r",
+									"const list = jsonData.data;          // array of objects\r",
+									"const allIds = list.map(item => item.id);  \r",
+									"\r",
+									"\r",
+									"/* ---- 2. save for re-use ---- */\r",
+									"pm.environment.set(\"allIds\", JSON.stringify(allIds));\r",
+									"console.log(\"Total IDs saved:\", allIds.length, allIds);\r",
+									"\r",
+									"\r",
+									"//Tests  \r",
+									"\r",
+									"//Check response is array\r",
+									"const response = pm.response.json();\r",
+									"pm.test(\"Response has data in array\", () => {\r",
+									"    pm.expect(response).to.have.property('data').that.is.an('array');\r",
+									"});\r",
+									"\r",
+									"// Validate data types of the body\r",
+									"pm.test(\"Validate the data types of the response body\", () => {\r",
+									"    response.data.forEach((item, idx) => {\r",
+									"        pm.expect(item.id,         `item[${idx}].id`).to.be.a('number');\r",
+									"        pm.expect(item.name,       `item[${idx}].name`).to.be.a('string');\r",
+									"        pm.expect(item.description,`item[${idx}].description`).to.be.a('string');\r",
+									"        pm.expect(item.price,      `item[${idx}].price`).to.be.a('number');\r",
+									"        pm.expect(item.category,   `item[${idx}].category`).to.be.a('string');\r",
+									"        pm.expect(item.createdBy,  `item[${idx}].createdBy`).to.be.a('number');\r",
+									"        pm.expect(item.createdAt,  `item[${idx}].createdAt`).to.be.a('string'); // ISO-date\r",
+									"        pm.expect(item.updatedAt,  `item[${idx}].updatedAt`).to.be.a('string');\r",
+									"    });\r",
+									"});\r",
+									"\r",
+									"//Number of count matches the lenght of Array\r",
+									"pm.test(\"Count number matches length of array\", () => {\r",
+									"    pm.expect(response.data.length).to.equal(response.count);\r",
+									"});\r",
+									"\r",
+									"\r",
+									"//  Log Summary Info\r",
+									"console.log(\"Status Code:\", pm.response.code);\r",
+									"console.log(\"Response Time:\", pm.response.responseTime + \"ms\");\r",
+									"console.log(\"Response Size:\", pm.response.size().body + \" bytes\");\r",
+									"console.log();"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BaseURL}}/items",
+							"host": [
+								"{{BaseURL}}"
+							],
+							"path": [
+								"items"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Specific Item",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();\r",
+									"\r",
+									"//Tests  \r",
+									"\r",
+									"//Check Message\r",
+									"pm.test(\"Validate Message\", () => {\r",
+									"    // Check presence\r",
+									"    pm.expect(jsonData.message).to.exist;\r",
+									"    // Check types\r",
+									"    pm.expect(jsonData.message).to.be.a(\"string\");\r",
+									"});\r",
+									"\r",
+									"//Check response is object\r",
+									"pm.test(\"Response data is a single object\", () => {\r",
+									"    pm.expect(jsonData).to.have.property('data').that.is.an('object');\r",
+									"});\r",
+									"\r",
+									"// Validate data types of the body\r",
+									"pm.test(\"Validate response data types\", () => {\r",
+									"    const item = jsonData.data; // object\r",
+									"    pm.expect(item.id).to.be.a('number');\r",
+									"    pm.expect(item.name).to.be.a('string');\r",
+									"    pm.expect(item.description).to.be.a('string');\r",
+									"    pm.expect(item.price).to.be.a('number');\r",
+									"    pm.expect(item.category).to.be.a('string');\r",
+									"    pm.expect(item.createdBy).to.be.a('number');\r",
+									"    pm.expect(item.createdAt).to.be.a('string');\r",
+									"    pm.expect(item.updatedAt).to.be.a('string');\r",
+									"});\r",
+									"\r",
+									"\r",
+									"//  Log Summary Info\r",
+									"console.log(\"Status Code:\", pm.response.code);\r",
+									"console.log(\"Response Time:\", pm.response.responseTime + \"ms\");\r",
+									"console.log(\"Response Size:\", pm.response.responseSize + \" bytes\");\r",
+									"console.log();\r",
+									"\r",
+									"//Response Body\r",
+									"console.log(\"Message\", jsonData.message);\r",
+									"console.log();\r",
+									"console.log(\"Response Body\");\r",
+									"console.log(\"ID:\", jsonData.data.id);\r",
+									"console.log(\"Name:\", jsonData.data.name);\r",
+									"console.log(\"Description:\", jsonData.data.description);\r",
+									"console.log(\"Price:\", jsonData.data.price);\r",
+									"console.log(\"Category:\", jsonData.data.category);\r",
+									"console.log(\"CreatedBy:\", jsonData.data.createdBy);\r",
+									"console.log(\"Created At:\", jsonData.data.createdAt);\r",
+									"console.log(\"Updated At:\", jsonData.data.updatedAt);\r",
+									"\r",
+									"console.log(\"Updated At:\", jsonData.data.updatedAt);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const idList = JSON.parse(pm.environment.get(\"allIds\"));\r",
+									"const pick   = idList[Math.floor(Math.random() * idList.length)];\r",
+									"pm.environment.set(\"randomId\", pick);\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BaseURL}}/items/{{randomId}}",
+							"host": [
+								"{{BaseURL}}"
+							],
+							"path": [
+								"items",
+								"{{randomId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Entire Item",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();\r",
+									"\r",
+									"//Tests  \r",
+									"\r",
+									"//Check Message\r",
+									"pm.test(\"Validate Message\", () => {\r",
+									"    // Check presence\r",
+									"    pm.expect(jsonData.message).to.exist;\r",
+									"    // Check types\r",
+									"    pm.expect(jsonData.message).to.be.a(\"string\");\r",
+									"});\r",
+									"\r",
+									"\r",
+									"//Check response is object\r",
+									"pm.test(\"Response data is a single object\", () => {\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response).to.have.property('data').that.is.an('object');\r",
+									"});\r",
+									"\r",
+									"\r",
+									"// Validate data types of the body\r",
+									"pm.test(\"Validate response data types\", () => {\r",
+									"    const res = pm.response.json();\r",
+									"    const item = res.data;          // object\r",
+									"    pm.expect(item.id).to.be.a('number');\r",
+									"    pm.expect(item.name).to.be.a('string');\r",
+									"    pm.expect(item.description).to.be.a('string');\r",
+									"    pm.expect(item.price).to.be.a('number');\r",
+									"    pm.expect(item.category).to.be.a('string');\r",
+									"    pm.expect(item.createdBy).to.be.a('number');\r",
+									"    pm.expect(item.createdAt).to.be.a('string');\r",
+									"    pm.expect(item.updatedAt).to.be.a('string');\r",
+									"});\r",
+									"\r",
+									"\r",
+									"//  Log Summary Info\r",
+									"console.log(\"Status Code:\", pm.response.code);\r",
+									"console.log(\"Response Time:\", pm.response.responseTime + \"ms\");\r",
+									"console.log(\"Response Size:\", pm.response.size().body + \" bytes\");\r",
+									"console.log();\r",
+									"\r",
+									"//Response Body\r",
+									"console.log(\"Message\", jsonData.message);\r",
+									"console.log();\r",
+									"console.log(\"Response Body\");\r",
+									"console.log(\"ID:\", jsonData.data.id);\r",
+									"console.log(\"Name:\", jsonData.data.name);\r",
+									"console.log(\"Description:\", jsonData.data.description);\r",
+									"console.log(\"Price:\", jsonData.data.price);\r",
+									"console.log(\"Category:\", jsonData.data.category);\r",
+									"console.log(\"CreatedBy:\", jsonData.data.createdBy);\r",
+									"console.log(\"Created At:\", jsonData.data.createdAt);\r",
+									"console.log(\"Updated At:\", jsonData.data.updatedAt);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"price\": {{$randomPrice}}\r\n    \r\n\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BaseURL}}/items/{{randomId}}",
+							"host": [
+								"{{BaseURL}}"
+							],
+							"path": [
+								"items",
+								"{{randomId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Partial Update Item",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();\r",
+									"\r",
+									"//Tests  \r",
+									"\r",
+									"//Check Message\r",
+									"pm.test(\"Validate Message\", () => {\r",
+									"    // Check presence\r",
+									"    pm.expect(jsonData.message).to.exist;\r",
+									"    // Check types\r",
+									"    pm.expect(jsonData.message).to.be.a(\"string\");\r",
+									"});\r",
+									"\r",
+									"//Check response is object\r",
+									"pm.test(\"Response data is a single object\", () => {\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response).to.have.property('data').that.is.an('object');\r",
+									"});\r",
+									"\r",
+									"\r",
+									"// Validate data types of the body\r",
+									"pm.test(\"Validate response data types\", () => {\r",
+									"    const res = pm.response.json();\r",
+									"    const item = res.data;          // object\r",
+									"    pm.expect(item.id).to.be.a('number');\r",
+									"    pm.expect(item.name).to.be.a('string');\r",
+									"    pm.expect(item.description).to.be.a('string');\r",
+									"    pm.expect(item.price).to.be.a('number');\r",
+									"    pm.expect(item.category).to.be.a('string');\r",
+									"    pm.expect(item.createdBy).to.be.a('number');\r",
+									"    pm.expect(item.createdAt).to.be.a('string');\r",
+									"    pm.expect(item.updatedAt).to.be.a('string');\r",
+									"});\r",
+									"\r",
+									"\r",
+									"//  Log Summary Info\r",
+									"console.log(\"Status Code:\", pm.response.code);\r",
+									"console.log(\"Response Time:\", pm.response.responseTime + \"ms\");\r",
+									"console.log(\"Response Size:\", pm.response.size().body + \" bytes\");\r",
+									"console.log();\r",
+									"\r",
+									"//Response Body\r",
+									"console.log(\"Message\", jsonData.message);\r",
+									"console.log();\r",
+									"console.log(\"Response Body\");\r",
+									"console.log(\"ID:\", jsonData.data.id);\r",
+									"console.log(\"Name:\", jsonData.data.name);\r",
+									"console.log(\"Description:\", jsonData.data.description);\r",
+									"console.log(\"Price:\", jsonData.data.price);\r",
+									"console.log(\"Category:\", jsonData.data.category);\r",
+									"console.log(\"CreatedBy:\", jsonData.data.createdBy);\r",
+									"console.log(\"Created At:\", jsonData.data.createdAt);\r",
+									"console.log(\"Updated At:\", jsonData.data.updatedAt);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"{{$randomFullName}}\",\r\n    \"description\": \"{{$randomPhrase}}\",\r\n    \"price\": {{$randomPrice}},\r\n    \"category\": \"Electronics\"\r\n}\r\n\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BaseURL}}/items/{{randomId}}",
+							"host": [
+								"{{BaseURL}}"
+							],
+							"path": [
+								"items",
+								"{{randomId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Item",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();\r",
+									"\r",
+									"//Tests  \r",
+									"\r",
+									"//Check Message\r",
+									"pm.test(\"Validate Message\", () => {\r",
+									"    // Check presence\r",
+									"    pm.expect(jsonData.message).to.exist;\r",
+									"    // Check types\r",
+									"    pm.expect(jsonData.message).to.be.a(\"string\");\r",
+									"});\r",
+									"\r",
+									"\r",
+									"//Check response is object\r",
+									"pm.test(\"Response data is a single object\", () => {\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response).to.have.property('data').that.is.an('object');\r",
+									"});\r",
+									"\r",
+									"\r",
+									"// Validate data types of the body\r",
+									"pm.test(\"Validate response data types\", () => {\r",
+									"    const res = pm.response.json();\r",
+									"    const item = res.data;          // object\r",
+									"    pm.expect(item.id).to.be.a('number');\r",
+									"    pm.expect(item.name).to.be.a('string');\r",
+									"    pm.expect(item.description).to.be.a('string');\r",
+									"    pm.expect(item.price).to.be.a('number');\r",
+									"    pm.expect(item.category).to.be.a('string');\r",
+									"    pm.expect(item.createdBy).to.be.a('number');\r",
+									"    pm.expect(item.createdAt).to.be.a('string');\r",
+									"    pm.expect(item.updatedAt).to.be.a('string');\r",
+									"});\r",
+									"\r",
+									"\r",
+									"\r",
+									"//  Log Summary Info\r",
+									"console.log(\"Status Code:\", pm.response.code);\r",
+									"console.log(\"Response Time:\", pm.response.responseTime + \"ms\");\r",
+									"console.log(\"Response Size:\", pm.response.size().body + \" bytes\");\r",
+									"console.log();\r",
+									"\r",
+									"//Response Body\r",
+									"console.log(\"Message\", jsonData.message);\r",
+									"console.log();\r",
+									"console.log(\"Response Body\");\r",
+									"console.log(\"ID:\", jsonData.data.id);\r",
+									"console.log(\"Name:\", jsonData.data.name);\r",
+									"console.log(\"Description:\", jsonData.data.description);\r",
+									"console.log(\"Price:\", jsonData.data.price);\r",
+									"console.log(\"Category:\", jsonData.data.category);\r",
+									"console.log(\"CreatedBy:\", jsonData.data.createdBy);\r",
+									"console.log(\"Created At:\", jsonData.data.createdAt);\r",
+									"console.log(\"Updated At:\", jsonData.data.updatedAt);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{BaseURL}}/items/{{randomId}}",
+							"host": [
+								"{{BaseURL}}"
+							],
+							"path": [
+								"items",
+								"{{randomId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Health Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();\r",
+									"\r",
+									"//Tests  \r",
+									"\r",
+									"//Check response is object\r",
+									"pm.test(\"Response data is a single object\", () => {\r",
+									"    pm.expect(jsonData).that.is.an('object');\r",
+									"});\r",
+									"\r",
+									"// Validate data types of the body\r",
+									"pm.test(\"Validate response data types\", () => {\r",
+									"    pm.expect(jsonData.status).to.be.a('string');\r",
+									"    pm.expect(jsonData.timestamp).to.be.a('string');\r",
+									"    pm.expect(jsonData.uptime).to.be.a('number');\r",
+									"    pm.expect(jsonData.users).to.be.a('number');\r",
+									"    pm.expect(jsonData.items).to.be.a('number');\r",
+									"});\r",
+									"\r",
+									"\r",
+									"\r",
+									"//  Log Summary Info\r",
+									"console.log(\"Status Code:\", pm.response.code);\r",
+									"console.log(\"Response Time:\", pm.response.responseTime + \"ms\");\r",
+									"console.log(\"Response Size:\", pm.response.responseSize + \" bytes\");\r",
+									"console.log();\r",
+									"\r",
+									"//Response Body\r",
+									"console.log(\"Response Body\");\r",
+									"console.log(\"Status: \", jsonData.status);\r",
+									"console.log(\"TimeStamp: \", jsonData.timestamp);\r",
+									"console.log(\"Up Time: \", jsonData.uptime);\r",
+									"console.log(\"Users: \", jsonData.users);\r",
+									"console.log(\"Items: \", jsonData.items);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BaseURL}}/health",
+							"host": [
+								"{{BaseURL}}"
+							],
+							"path": [
+								"health"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{authToken}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Negative CRUD Items",
+			"item": [
+				{
+					"name": "Invalid Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();\r",
+									"console.log(\"Invalid Token\");\r",
+									"console.log();\r",
+									"\r",
+									"//Tests\r",
+									"\r",
+									"pm.test(\"Status Code is 403 Forbidden\", () => {\r",
+									"    pm.expect(pm.response.code).to.eql(403);\r",
+									"});\r",
+									"\r",
+									"//Response time\r",
+									"pm.test(\"Response time is less than 500 seconds \" , function () {\r",
+									"    pm.expect(pm.response.responseTime).to.be.below(500);\r",
+									"});\r",
+									"\r",
+									"//Response Size\r",
+									"pm.test(\"Response size is less than 500 Bytes\", function () {\r",
+									"    pm.expect(pm.response.size().body).to.be.below(500); \r",
+									"});\r",
+									"\r",
+									"//Check Message\r",
+									"pm.test(\"Validate Error Message\", () => {\r",
+									"    // Check presence\r",
+									"    pm.expect(jsonData.error).to.exist;\r",
+									"    // Check types\r",
+									"    pm.expect(jsonData.error).to.be.a(\"string\");\r",
+									"    //Check text\r",
+									"   pm.expect(jsonData.error).to.eql(\"Invalid token\");\r",
+									"});\r",
+									"\r",
+									"\r",
+									"\r",
+									"//  Log Summary Info\r",
+									"console.log(\"Status Code:\", pm.response.code);\r",
+									"console.log(\"Response Time:\", pm.response.responseTime + \"ms\");\r",
+									"console.log(\"Response Size:\", pm.response.size().body + \" bytes\");\r",
+									"console.log();\r",
+									"\r",
+									"\r",
+									"//Response Body\r",
+									"console.log(\"Error Message\", jsonData.error);\r",
+									"console.log(\"Details\", jsonData.details);\r",
+									"console.log();"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "123",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"{{random_fullname}}\",\r\n    \"description\": \"{{random_description}}\",\r\n    \"price\": {{$randomPrice}},\r\n    \"category\": \"{{random_category}}\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BaseURL}}/items",
+							"host": [
+								"{{BaseURL}}"
+							],
+							"path": [
+								"items"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "No Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();\r",
+									"console.log(\"No Token\");\r",
+									"console.log();\r",
+									"\r",
+									"//Tests\r",
+									"\r",
+									"pm.test(\"Status Code is 401 Unauthorized\", () => {\r",
+									"    pm.expect(pm.response.code).to.eql(401);\r",
+									"});\r",
+									"\r",
+									"//Response time\r",
+									"pm.test(\"Response time is less than 500 seconds \" , function () {\r",
+									"    pm.expect(pm.response.responseTime).to.be.below(500);\r",
+									"});\r",
+									"\r",
+									"//Response Size\r",
+									"pm.test(\"Response size is less than 500 Bytes\", function () {\r",
+									"    pm.expect(pm.response.size().body).to.be.below(500); \r",
+									"});\r",
+									"\r",
+									"//Check Message\r",
+									"pm.test(\"Validate Error Message\", () => {\r",
+									"    // Check presence\r",
+									"    pm.expect(jsonData.error).to.exist;\r",
+									"    // Check types\r",
+									"    pm.expect(jsonData.error).to.be.a(\"string\");\r",
+									"    //Check text\r",
+									"   pm.expect(jsonData.error).to.eql(\"Authorization header missing\");\r",
+									"});\r",
+									"\r",
+									"\r",
+									"\r",
+									"//  Log Summary Info\r",
+									"console.log(\"Status Code:\", pm.response.code);\r",
+									"console.log(\"Response Time:\", pm.response.responseTime + \"ms\");\r",
+									"console.log(\"Response Size:\", pm.response.size().body + \" bytes\");\r",
+									"console.log();\r",
+									"\r",
+									"\r",
+									"//Response Body\r",
+									"console.log(\"Error Message\", jsonData.error);\r",
+									"console.log(\"Details\", jsonData.details);\r",
+									"console.log();"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"{{random_fullname}}\",\r\n    \"description\": \"{{random_description}}\",\r\n    \"price\": {{random_price}},\r\n    \"category\": \"{{random_category}}\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BaseURL}}/items",
+							"host": [
+								"{{BaseURL}}"
+							],
+							"path": [
+								"items"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Missing Required Fields",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();\r",
+									"console.log(\"No Token\");\r",
+									"console.log();\r",
+									"\r",
+									"//Tests\r",
+									"\r",
+									"//Status Code\r",
+									"pm.test(\"Invalid payload should return 400 Bad Request\", () => {\r",
+									"    pm.expect(pm.response.code).to.eql(400);\r",
+									"});\r",
+									"\r",
+									"\r",
+									"//Response time\r",
+									"pm.test(\"Response time is less than 500 seconds \" , function () {\r",
+									"    pm.expect(pm.response.responseTime).to.be.below(500);\r",
+									"});\r",
+									"\r",
+									"//Response Size\r",
+									"pm.test(\"Response size is less than 500 Bytes\", function () {\r",
+									"    pm.expect(pm.response.size().body).to.be.below(500); \r",
+									"});\r",
+									"\r",
+									"//Check Message\r",
+									"pm.test(\"Validate Error Message\", () => {\r",
+									"    // Check presence\r",
+									"    pm.expect(jsonData.error).to.exist;\r",
+									"    // Check types\r",
+									"    pm.expect(jsonData.error).to.be.a(\"string\");\r",
+									"    //Check text\r",
+									"   pm.expect(jsonData.error).to.eql(\"Invalid JSON format\");\r",
+									"});\r",
+									"\r",
+									"\r",
+									"\r",
+									"//  Log Summary Info\r",
+									"console.log(\"Status Code:\", pm.response.code);\r",
+									"console.log(\"Response Time:\", pm.response.responseTime + \"ms\");\r",
+									"console.log(\"Response Size:\", pm.response.size().body + \" bytes\");\r",
+									"console.log();\r",
+									"\r",
+									"\r",
+									"//Response Body\r",
+									"console.log(\"Error Message\", jsonData.error);\r",
+									"console.log(\"Details\", jsonData.details);\r",
+									"console.log(\"Help\", jsonData.help);\r",
+									"console.log();"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": ,\r\n    \"description\": \"{{$randomLoremText}}\",\r\n    \"price\": {{$randomPrice}},\r\n    \"category\": {{$randomLoremLines}}\r\n}\r\n\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BaseURL}}/items",
+							"host": [
+								"{{BaseURL}}"
+							],
+							"path": [
+								"items"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Non-existent IDs",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();\r",
+									"\r",
+									"\r",
+									"//Tests\r",
+									"\r",
+									"//Status Code\r",
+									"pm.test(\"Non-existent ID should return 404 Not Found\", () => {\r",
+									"    pm.expect(pm.response.code).to.eql(404);\r",
+									"});\r",
+									"\r",
+									"\r",
+									"//Response time\r",
+									"pm.test(\"Response time is less than 500 seconds \" , function () {\r",
+									"    pm.expect(pm.response.responseTime).to.be.below(500);\r",
+									"});\r",
+									"\r",
+									"//Response Size\r",
+									"pm.test(\"Response size is less than 500 Bytes\", function () {\r",
+									"    pm.expect(pm.response.size().body).to.be.below(500); \r",
+									"});\r",
+									"\r",
+									"//Check Message\r",
+									"pm.test(\"Validate Error Message\", () => {\r",
+									"    // Check presence\r",
+									"    pm.expect(jsonData.error).to.exist;\r",
+									"    // Check types\r",
+									"    pm.expect(jsonData.error).to.be.a(\"string\");\r",
+									"    //Check text\r",
+									"   pm.expect(jsonData.error).to.eql(\"Item not found\");\r",
+									"});\r",
+									"\r",
+									"\r",
+									"\r",
+									"//  Log Summary Info\r",
+									"console.log(\"Status Code:\", pm.response.code);\r",
+									"console.log(\"Response Time:\", pm.response.responseTime + \"ms\");\r",
+									"console.log(\"Response Size:\", pm.response.size().body + \" bytes\");\r",
+									"console.log();\r",
+									"\r",
+									"\r",
+									"//Response Body\r",
+									"console.log(\"Error Message\", jsonData.error);\r",
+									"\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BaseURL}}/items/1",
+							"host": [
+								"{{BaseURL}}"
+							],
+							"path": [
+								"items",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Empty Body",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();\r",
+									"\r",
+									"//Tests\r",
+									"\r",
+									"//Status Code\r",
+									"pm.test(\"Empty request body should return 400 Bad Request\", () => {\r",
+									"    pm.expect(pm.response.code).to.eql(400);\r",
+									"});\r",
+									"\r",
+									"\r",
+									"//Response time\r",
+									"pm.test(\"Response time is less than 500 seconds \" , function () {\r",
+									"    pm.expect(pm.response.responseTime).to.be.below(500);\r",
+									"});\r",
+									"\r",
+									"//Response Size\r",
+									"pm.test(\"Response size is less than 500 Bytes\", function () {\r",
+									"    pm.expect(pm.response.size().body).to.be.below(500); \r",
+									"});\r",
+									"\r",
+									"//Check Message\r",
+									"pm.test(\"Validate Error Message\", () => {\r",
+									"    // Check presence\r",
+									"    pm.expect(jsonData.error).to.exist;\r",
+									"    // Check types\r",
+									"    pm.expect(jsonData.error).to.be.a(\"string\");\r",
+									"    //Check text\r",
+									"   pm.expect(jsonData.error).to.eql(\"Item name is required\");\r",
+									"});\r",
+									"\r",
+									"\r",
+									"\r",
+									"//  Log Summary Info\r",
+									"console.log(\"Status Code:\", pm.response.code);\r",
+									"console.log(\"Response Time:\", pm.response.responseTime + \"ms\");\r",
+									"console.log(\"Response Size:\", pm.response.size().body + \" bytes\");\r",
+									"console.log();\r",
+									"\r",
+									"\r",
+									"//Response Body\r",
+									"console.log(\"Error Message\", jsonData.error);\r",
+									"console.log(\"Details\", jsonData.details);\r",
+									"console.log();"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "\r\n"
+						},
+						"url": {
+							"raw": "{{BaseURL}}/items",
+							"host": [
+								"{{BaseURL}}"
+							],
+							"path": [
+								"items"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Invalid Field Type - Price",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();\r",
+									"\r",
+									"//Tests\r",
+									"\r",
+									"//Status Code\r",
+									"pm.test(\"Invalid price value should return 400 Bad Request\", () => {\r",
+									"    pm.expect(pm.response.code).to.eql(400);\r",
+									"});\r",
+									"\r",
+									"\r",
+									"//Response time\r",
+									"pm.test(\"Response time is less than 500 seconds \", function () {\r",
+									"    pm.expect(pm.response.responseTime).to.be.below(500);\r",
+									"});\r",
+									"\r",
+									"//Response Size\r",
+									"pm.test(\"Response size is less than 500 Bytes\", function () {\r",
+									"    pm.expect(pm.response.size().body).to.be.below(500);\r",
+									"});\r",
+									"\r",
+									"//Check Message\r",
+									"pm.test(\"Validate Error Message\", () => {\r",
+									"    // Check presence\r",
+									"    pm.expect(jsonData.error).to.exist;\r",
+									"    // Check types\r",
+									"    pm.expect(jsonData.error).to.be.a(\"string\");\r",
+									"    //Check text\r",
+									"    pm.expect(jsonData.error).to.eql(\"Invalid price value\");\r",
+									"});\r",
+									"\r",
+									"\r",
+									"\r",
+									"//  Log Summary Info\r",
+									"console.log(\"Status Code:\", pm.response.code);\r",
+									"console.log(\"Response Time:\", pm.response.responseTime + \"ms\");\r",
+									"console.log(\"Response Size:\", pm.response.size().body + \" bytes\");\r",
+									"console.log();\r",
+									"\r",
+									"\r",
+									"//Response Body\r",
+									"console.log(\"Error Message\", jsonData.error);\r",
+									"console.log(\"Details\", jsonData.details);\r",
+									"console.log();"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\" : \"test\",\r\n    \"description\": \"Lorem \",\r\n    \"price\": \"abc\",\r\n    \"category\": \"Lorem\"\r\n\r\n\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BaseURL}}/items",
+							"host": [
+								"{{BaseURL}}"
+							],
+							"path": [
+								"items"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Invalid Field Type - Name",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();\r",
+									"\r",
+									"//Tests\r",
+									"\r",
+									"//Status Code\r",
+									"pm.test(\"Invalid name value should return 400 Bad Request\", () => {\r",
+									"    pm.expect(pm.response.code).to.eql(400);\r",
+									"});\r",
+									"\r",
+									"\r",
+									"//Response time\r",
+									"pm.test(\"Response time is less than 500 seconds \", function () {\r",
+									"    pm.expect(pm.response.responseTime).to.be.below(500);\r",
+									"});\r",
+									"\r",
+									"//Response Size\r",
+									"pm.test(\"Response size is less than 500 Bytes\", function () {\r",
+									"    pm.expect(pm.response.size().body).to.be.below(500);\r",
+									"});\r",
+									"\r",
+									"//Check Message\r",
+									"pm.test(\"Validate Error Message\", () => {\r",
+									"    // Check presence\r",
+									"    pm.expect(jsonData.error).to.exist;\r",
+									"    // Check types\r",
+									"    pm.expect(jsonData.error).to.be.a(\"string\");\r",
+									"    //Check text\r",
+									"    pm.expect(jsonData.error).to.eql(\"Invalid data type for name\");\r",
+									"});\r",
+									"\r",
+									"\r",
+									"\r",
+									"//  Log Summary Info\r",
+									"console.log(\"Status Code:\", pm.response.code);\r",
+									"console.log(\"Response Time:\", pm.response.responseTime + \"ms\");\r",
+									"console.log(\"Response Size:\", pm.response.size().body + \" bytes\");\r",
+									"console.log();\r",
+									"\r",
+									"\r",
+									"//Response Body\r",
+									"console.log(\"Error Message\", jsonData.error);\r",
+									"console.log(\"Details\", jsonData.details);\r",
+									"console.log();"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\" : 123,\r\n    \"description\": \"Lorem \",\r\n    \"price\": 23.99,\r\n    \"category\": \"abc\"\r\n\r\n\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BaseURL}}/items",
+							"host": [
+								"{{BaseURL}}"
+							],
+							"path": [
+								"items"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Item – Negative Price",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();\r",
+									"\r",
+									"//Tests\r",
+									"\r",
+									"//Status Code\r",
+									"pm.test(\"Invalid value of price should return 400 Bad Request\", () => {\r",
+									"    pm.expect(pm.response.code).to.eql(400);\r",
+									"});\r",
+									"\r",
+									"\r",
+									"//Response time\r",
+									"pm.test(\"Response time is less than 500 seconds \", function () {\r",
+									"    pm.expect(pm.response.responseTime).to.be.below(500);\r",
+									"});\r",
+									"\r",
+									"//Response Size\r",
+									"pm.test(\"Response size is less than 500 Bytes\", function () {\r",
+									"    pm.expect(pm.response.size().body).to.be.below(500);\r",
+									"});\r",
+									"\r",
+									"//Check Message\r",
+									"pm.test(\"Validate Error Message\", () => {\r",
+									"    // Check presence\r",
+									"    pm.expect(jsonData.error).to.exist;\r",
+									"    // Check types\r",
+									"    pm.expect(jsonData.error).to.be.a(\"string\");\r",
+									"    //Check text\r",
+									"    pm.expect(jsonData.error).to.eql(\"Invalid price value\");\r",
+									"});\r",
+									"\r",
+									"\r",
+									"\r",
+									"//  Log Summary Info\r",
+									"console.log(\"Status Code:\", pm.response.code);\r",
+									"console.log(\"Response Time:\", pm.response.responseTime + \"ms\");\r",
+									"console.log(\"Response Size:\", pm.response.size().body + \" bytes\");\r",
+									"console.log();\r",
+									"\r",
+									"\r",
+									"//Response Body\r",
+									"console.log(\"Error Message\", jsonData.error);\r",
+									"console.log(\"Details\", jsonData.details);\r",
+									"console.log();"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"Test Item Negative Price\",\r\n    \"description\": \"Invalid input\",\r\n    \"price\": -200,\r\n    \"category\": \"electronics\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BaseURL}}/items",
+							"host": [
+								"{{BaseURL}}"
+							],
+							"path": [
+								"items"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Item – Long String",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Generate a long string of 1000 characters\r",
+									"let longString = 'A'.repeat(1000);\r",
+									"pm.environment.set(\"long_name\", longString);\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();\r",
+									"\r",
+									"//Tests\r",
+									"\r",
+									"//Status Code\r",
+									"pm.test(\"Extreme value of name should return 400 Bad Request\", () => {\r",
+									"    pm.expect(pm.response.code).to.eql(400);\r",
+									"});\r",
+									"\r",
+									"\r",
+									"//Response time\r",
+									"pm.test(\"Response time is less than 500 seconds \", function () {\r",
+									"    pm.expect(pm.response.responseTime).to.be.below(500);\r",
+									"});\r",
+									"\r",
+									"//Response Size\r",
+									"pm.test(\"Response size is less than 500 Bytes\", function () {\r",
+									"    pm.expect(pm.response.size().body).to.be.below(500);\r",
+									"});\r",
+									"\r",
+									"//Check Message\r",
+									"pm.test(\"Validate Error Message\", () => {\r",
+									"    // Check presence\r",
+									"    pm.expect(jsonData.error).to.exist;\r",
+									"    // Check types\r",
+									"    pm.expect(jsonData.error).to.be.a(\"string\");\r",
+									"    //Check text\r",
+									"    pm.expect(jsonData.error).to.eql(\"Item name too long\");\r",
+									"});\r",
+									"\r",
+									"\r",
+									"\r",
+									"//  Log Summary Info\r",
+									"console.log(\"Status Code:\", pm.response.code);\r",
+									"console.log(\"Response Time:\", pm.response.responseTime + \"ms\");\r",
+									"console.log(\"Response Size:\", pm.response.size().body + \" bytes\");\r",
+									"console.log();\r",
+									"\r",
+									"\r",
+									"//Response Body\r",
+									"console.log(\"Error Message\", jsonData.error);\r",
+									"console.log(\"Details\", jsonData.details);\r",
+									"console.log(\"Current Length\", jsonData.currentLength);\r",
+									"console.log(\"Max Length\", jsonData.maxLength);\r",
+									"console.log();"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"{{long_name}}\",\r\n    \"description\": \"Stress test with very long string\",\r\n    \"price\": 1500,\r\n    \"category\": \"electronics\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BaseURL}}/items",
+							"host": [
+								"{{BaseURL}}"
+							],
+							"path": [
+								"items"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Item – Large Number",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Generate a long paragrapgh\r",
+									"let longPriceValue = 10000001;\r",
+									"pm.environment.set(\"long_pricevalue\", longPriceValue);\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();\r",
+									"\r",
+									"//Tests\r",
+									"\r",
+									"//Status Code\r",
+									"pm.test(\"Extreme value of price should return 400 Bad Request\", () => {\r",
+									"    pm.expect(pm.response.code).to.eql(400);\r",
+									"});\r",
+									"\r",
+									"\r",
+									"//Response time\r",
+									"pm.test(\"Response time is less than 500 seconds \", function () {\r",
+									"    pm.expect(pm.response.responseTime).to.be.below(500);\r",
+									"});\r",
+									"\r",
+									"//Response Size\r",
+									"pm.test(\"Response size is less than 500 Bytes\", function () {\r",
+									"    pm.expect(pm.response.size().body).to.be.below(500);\r",
+									"});\r",
+									"\r",
+									"//Check Message\r",
+									"pm.test(\"Validate Error Message\", () => {\r",
+									"    // Check presence\r",
+									"    pm.expect(jsonData.error).to.exist;\r",
+									"    // Check types\r",
+									"    pm.expect(jsonData.error).to.be.a(\"string\");\r",
+									"    //Check text\r",
+									"    pm.expect(jsonData.error).to.eql(\"Price too high\");\r",
+									"});\r",
+									"\r",
+									"\r",
+									"\r",
+									"//  Log Summary Info\r",
+									"console.log(\"Status Code:\", pm.response.code);\r",
+									"console.log(\"Response Time:\", pm.response.responseTime + \"ms\");\r",
+									"console.log(\"Response Size:\", pm.response.size().body + \" bytes\");\r",
+									"console.log();\r",
+									"\r",
+									"\r",
+									"//Response Body\r",
+									"console.log(\"Error Message\", jsonData.error);\r",
+									"console.log(\"Details\", jsonData.details);\r",
+									"console.log(\"Current Length\", jsonData.currentLength);\r",
+									"console.log(\"Max Length\", jsonData.maxLength);\r",
+									"console.log();"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"{{$randomFullName}}\",\r\n    \"description\": \"{{$randomLoremSentence}}\",\r\n    \"price\": {{long_pricevalue}},\r\n    \"category\": \"electronics\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BaseURL}}/items",
+							"host": [
+								"{{BaseURL}}"
+							],
+							"path": [
+								"items"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Invalid Method",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();\r",
+									"\r",
+									"//Tests\r",
+									"\r",
+									"//Status Code\r",
+									"pm.test(\"Unsupported HTTP Method should return 405 Method Not Allowed\", () => {\r",
+									"    pm.expect(pm.response.code).to.eql(405);\r",
+									"});\r",
+									"\r",
+									"\r",
+									"//Response time\r",
+									"pm.test(\"Response time is less than 500 seconds \", function () {\r",
+									"    pm.expect(pm.response.responseTime).to.be.below(500);\r",
+									"});\r",
+									"\r",
+									"//Response Size\r",
+									"pm.test(\"Response size is less than 500 Bytes\", function () {\r",
+									"    pm.expect(pm.response.size().body).to.be.below(500);\r",
+									"});\r",
+									"\r",
+									"//Check Message\r",
+									"pm.test(\"Validate Error Message\", () => {\r",
+									"    // Check presence\r",
+									"    pm.expect(jsonData.error).to.exist;\r",
+									"    // Check types\r",
+									"    pm.expect(jsonData.error).to.be.a(\"string\");\r",
+									"    //Check text\r",
+									"    pm.expect(jsonData.error).to.eql(\"Method not allowed\");\r",
+									"});\r",
+									"\r",
+									"\r",
+									"\r",
+									"//  Log Summary Info\r",
+									"console.log(\"Status Code:\", pm.response.code);\r",
+									"console.log(\"Response Time:\", pm.response.responseTime + \"ms\");\r",
+									"console.log(\"Response Size:\", pm.response.size().body + \" bytes\");\r",
+									"console.log();\r",
+									"\r",
+									"\r",
+									"//Response Body\r",
+									"console.log(\"Error Message\", jsonData.error);\r",
+									"console.log(\"Details\", jsonData.details);\r",
+									"console.log(\"\", jsonData.currentLength);\r",
+									"console.log(\"Max Length\", jsonData.maxLength);\r",
+									"console.log();"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{BaseURL}}/health",
+							"host": [
+								"{{BaseURL}}"
+							],
+							"path": [
+								"health"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Unexpected Fields",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();\r",
+									"\r",
+									"//Tests  \r",
+									"\r",
+									"//Check Message\r",
+									"pm.test(\"Validate Message\", () => {\r",
+									"    // Check presence\r",
+									"    pm.expect(jsonData.message).to.exist;\r",
+									"    // Check types\r",
+									"    pm.expect(jsonData.message).to.be.a(\"string\");\r",
+									"});\r",
+									"\r",
+									"//Check response is object\r",
+									"pm.test(\"Response data is a single object\", () => {\r",
+									"    const response = pm.response.json();\r",
+									"    pm.expect(response).to.have.property('data').that.is.an('object');\r",
+									"    });\r",
+									"\r",
+									"\r",
+									"// Validate data types of the body\r",
+									"pm.test(\"Validate response data types\", () => {\r",
+									"    const res = pm.response.json();\r",
+									"    const item = res.data;          // object\r",
+									"    pm.expect(item.id).to.be.a('number');\r",
+									"    pm.expect(item.name).to.be.a('string');\r",
+									"    pm.expect(item.description).to.be.a('string');\r",
+									"    pm.expect(item.price).to.be.a('number');\r",
+									"    pm.expect(item.category).to.be.a('string');\r",
+									"    pm.expect(item.createdBy).to.be.a('number');\r",
+									"    pm.expect(item.createdAt).to.be.a('string');\r",
+									"    pm.expect(item.updatedAt).to.be.a('string');\r",
+									"});\r",
+									"\r",
+									"\r",
+									"\r",
+									"//  Log Summary Info\r",
+									"console.log(\"Status Code:\", pm.response.code);\r",
+									"console.log(\"Response Time:\", pm.response.responseTime + \"ms\");\r",
+									"console.log(\"Response Size:\", pm.response.size().body + \" bytes\");\r",
+									"console.log();\r",
+									"\r",
+									"\r",
+									"//Response Body\r",
+									"console.log(\"Message\", jsonData.message);\r",
+									"console.log();"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"user1\",\r\n    \"description\": \"test\",\r\n    \"price\": 89,\r\n    \"category\": \"testCtategory\",\r\n    \"extra\": \"Extra\"\r\n}\r\n\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{BaseURL}}/items",
+							"host": [
+								"{{BaseURL}}"
+							],
+							"path": [
+								"items"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{authToken}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Delete Items",
+			"item": [
+				{
+					"name": "Clear All Items",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();\r",
+									"\r",
+									"//Tests  \r",
+									"\r",
+									"//Status Code\r",
+									"pm.test(\"Status code is 200 OK\", function () {\r",
+									"    pm.expect(pm.response.code).to.equal(200);\r",
+									"});\r",
+									"\r",
+									"//Response time\r",
+									"pm.test(\"Response time is less than 500 milliseconds\", function () {\r",
+									"    pm.expect(pm.response.responseTime).to.be.below(500);\r",
+									"});\r",
+									"\r",
+									"//Response Size\r",
+									"pm.test(\"Response size is less than 500 Bytes\", function () {\r",
+									"    pm.expect(pm.response.responseSize).to.be.below(500); \r",
+									"});\r",
+									"\r",
+									"//Check response is object\r",
+									"pm.test(\"Response data is a single object\", () => {\r",
+									"    pm.expect(jsonData).that.is.an('object');\r",
+									"});\r",
+									"\r",
+									"// JSON Schema for response\r",
+									"const healthCheckSchema = {\r",
+									"    type: \"object\",\r",
+									"    properties: {\r",
+									"        message: { type: \"string\" },            // should always be a string\r",
+									"        users: { type: \"number\" },             // integer\r",
+									"        items: { type: \"number\" }              // integer\r",
+									"    },\r",
+									"    required: [\"message\", \"users\", \"items\"]\r",
+									"};\r",
+									"\r",
+									"\r",
+									"// Validate response against schema\r",
+									"pm.test(\"Response schema is valid\", function () {\r",
+									"    pm.expect(jsonData).to.have.jsonSchema(healthCheckSchema);\r",
+									"});\r",
+									"\r",
+									"//  Log Summary Info\r",
+									"console.log(\"Status Code:\", pm.response.code);\r",
+									"console.log(\"Response Time:\", pm.response.responseTime + \"ms\");\r",
+									"console.log(\"Response Size:\", pm.response.responseSize + \" bytes\");\r",
+									"console.log();\r",
+									"\r",
+									"//Response Body\r",
+									"console.log(\"Response Body\");\r",
+									"console.log(\"Message: \", jsonData.message);\r",
+									"console.log(\"Users: \", jsonData.users);\r",
+									"console.log(\"Items: \", jsonData.items);\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{BaseURL}}/admin/clear-items",
+							"host": [
+								"{{BaseURL}}"
+							],
+							"path": [
+								"admin",
+								"clear-items"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Clear All Data",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();\r",
+									"\r",
+									"//Tests  \r",
+									"\r",
+									"//Status Code\r",
+									"pm.test(\"Status code is 200 OK\", function () {\r",
+									"    pm.expect(pm.response.code).to.equal(200);\r",
+									"});\r",
+									"\r",
+									"//Response time\r",
+									"pm.test(\"Response time is less than 500 milliseconds\", function () {\r",
+									"    pm.expect(pm.response.responseTime).to.be.below(500);\r",
+									"});\r",
+									"\r",
+									"//Response Size\r",
+									"pm.test(\"Response size is less than 500 Bytes\", function () {\r",
+									"    pm.expect(pm.response.responseSize).to.be.below(500); \r",
+									"});\r",
+									"\r",
+									"//Check response is object\r",
+									"pm.test(\"Response data is a single object\", () => {\r",
+									"    pm.expect(jsonData).that.is.an('object');\r",
+									"});\r",
+									"\r",
+									"// JSON Schema for response\r",
+									"const healthCheckSchema = {\r",
+									"    type: \"object\",\r",
+									"    properties: {\r",
+									"        message: { type: \"string\" },            // should always be a string\r",
+									"        users: { type: \"number\" },             // integer\r",
+									"        items: { type: \"number\" }              // integer\r",
+									"    },\r",
+									"    required: [\"message\", \"users\", \"items\"]\r",
+									"};\r",
+									"\r",
+									"\r",
+									"// Validate response against schema\r",
+									"pm.test(\"Response schema is valid\", function () {\r",
+									"    pm.expect(jsonData).to.have.jsonSchema(healthCheckSchema);\r",
+									"});\r",
+									"\r",
+									"//  Log Summary Info\r",
+									"console.log(\"Status Code:\", pm.response.code);\r",
+									"console.log(\"Response Time:\", pm.response.responseTime + \"ms\");\r",
+									"console.log(\"Response Size:\", pm.response.responseSize + \" bytes\");\r",
+									"console.log();\r",
+									"\r",
+									"//Response Body\r",
+									"console.log(\"Response Body\");\r",
+									"console.log(\"Message: \", jsonData.message);\r",
+									"console.log(\"Users: \", jsonData.users);\r",
+									"console.log(\"Items: \", jsonData.items);\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{BaseURL}}/admin/clear-all",
+							"host": [
+								"{{BaseURL}}"
+							],
+							"path": [
+								"admin",
+								"clear-all"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{authToken}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					"\r",
+					"// 1.  random full name\r",
+					"const randomFullName = pm.variables.replaceIn(\"{{$randomUserName}}\");\r",
+					"pm.variables.set(\"random_fullname\", randomFullName);\r",
+					"\r",
+					"// 2.  random paragraph for description\r",
+					"const randomDescription = pm.variables.replaceIn(\"{{$randomLoremLines}}\");\r",
+					"pm.variables.set(\"random_description\", randomDescription);\r",
+					"\r",
+					"// 3.  random price  10 – 500  (2 decimals)\r",
+					"const randomPrice = (Math.random() * 490 + 10).toFixed(2);\r",
+					"pm.variables.set(\"random_price\", Number(randomPrice));   // store as number, not string\r",
+					"\r",
+					"// 4.  random category (pick from your own list)\r",
+					"const randomCategory = [\"Electronics\", \"Workstation\", \"Digital\"];\r",
+					"pm.variables.set(\"random_category\", _.sample(randomCategory));"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					"//For Console Logging\r",
+					"\r",
+					"const jsonData = pm.response.json();\r",
+					"\r",
+					"const bytes    = pm.response.text().length;\r",
+					"const kb       = (bytes/1024).toFixed(2);\r",
+					"const header   = pm.response.headers;\r",
+					"\r",
+					"//Response Time\r",
+					"pm.test(\"Response time is under threshold (Collection Level)\", () => {\r",
+					"    const threshold = parseInt(pm.variables.get(\"max_response_time\")); // fetch from collection variable\r",
+					"    pm.expect(pm.response.responseTime).to.be.below(threshold, \r",
+					"        `Response time exceeded threshold: ${pm.response.responseTime}ms (Threshold: ${threshold}ms)`);\r",
+					"});\r",
+					"\r",
+					"//Size\r",
+					"pm.test(\"Response size under limit (Collection Level)\", () => {\r",
+					"    const maxSize = parseInt(pm.variables.get(\"max_response_size\") || 15000); \r",
+					"    pm.expect(pm.response.responseSize).to.be.below(maxSize, \r",
+					"        `Response size exceeded: ${pm.response.responseSize} bytes (Limit: ${maxSize})`);\r",
+					"});\r",
+					"\r",
+					"\r",
+					"//Headers \r",
+					"pm.test(\"Content-Type = application/json (Collection Level)\", () => {\r",
+					"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");\r",
+					"\r",
+					"});\r",
+					"\r",
+					"//JSON validity \r",
+					"pm.test(\"Valid JSON body (Collection Level)\", () => {\r",
+					"    pm.response.to.be.json;\r",
+					"});\r",
+					"\r",
+					"//Root keys\r",
+					"pm.test(\"Response has expected root keys (Collection Level)\", () => {\r",
+					"    const json = pm.response.json();\r",
+					"    pm.expect(json).to.have.any.keys(\"data\", \"message\", \"error\", \"status\");\r",
+					"});\r",
+					"\r",
+					"//Schema Validation\r",
+					"\r",
+					"// ✅ Import Ajv for schema validation\r",
+					"const Ajv = require('ajv');\r",
+					"const ajv = new Ajv();\r",
+					"\r",
+					"// ------------------ SCHEMAS ------------------\r",
+					"\r",
+					"// 1. Auth Response (Login/Register)\r",
+					"const authSchema = {\r",
+					"    type: \"object\",\r",
+					"    required: [\"message\", \"token\", \"user\"],\r",
+					"    properties: {\r",
+					"        message: { type: \"string\" },\r",
+					"        token: { type: \"string\" },\r",
+					"        user: {\r",
+					"            type: \"object\",\r",
+					"            required: [\"id\", \"username\"],\r",
+					"            properties: {\r",
+					"                id: { type: \"number\" },\r",
+					"                username: { type: \"string\" }\r",
+					"            }\r",
+					"        }\r",
+					"    }\r",
+					"};\r",
+					"\r",
+					"// 2. Single Item\r",
+					"const itemSchema = {\r",
+					"    type: \"object\",\r",
+					"    required: [\"id\", \"name\", \"description\", \"price\", \"category\", \"createdBy\", \"createdAt\", \"updatedAt\"],\r",
+					"    properties: {\r",
+					"        id: { type: \"number\" },\r",
+					"        name: { type: \"string\" },\r",
+					"        description: { type: \"string\" },\r",
+					"        price: { type: \"number\" },\r",
+					"        category: { type: \"string\" },\r",
+					"        createdBy: { type: \"number\" },\r",
+					"        createdAt: { type: \"string\" },\r",
+					"        updatedAt: { type: \"string\" }\r",
+					"    }\r",
+					"};\r",
+					"\r",
+					"// 3. List Response\r",
+					"const listSchema = {\r",
+					"    type: \"object\",\r",
+					"    required: [\"message\", \"data\", \"count\"],\r",
+					"    properties: {\r",
+					"        message: { type: \"string\" },\r",
+					"        count: { type: \"number\" },\r",
+					"        data: {\r",
+					"            type: \"array\",\r",
+					"            items: itemSchema\r",
+					"        }\r",
+					"    }\r",
+					"};\r",
+					"\r",
+					"// 4. Message-only Response\r",
+					"const messageSchema = {\r",
+					"    type: \"object\",\r",
+					"    required: [\"message\"],\r",
+					"    properties: {\r",
+					"        message: { type: \"string\" }\r",
+					"    }\r",
+					"};\r",
+					"\r",
+					"// 5. Error Response\r",
+					"const errorSchema = {\r",
+					"    type: \"object\",\r",
+					"    required: [\"error\"],\r",
+					"    properties: {\r",
+					"        error: { type: \"string\" }\r",
+					"    }\r",
+					"};\r",
+					"\r",
+					"// 6. Health Check Response\r",
+					"const healthSchema = {\r",
+					"    type: \"object\",\r",
+					"    required: [\"status\"],\r",
+					"    properties: {\r",
+					"        status: { type: \"string\" },\r",
+					"        uptime: { type: \"number\" }\r",
+					"    }\r",
+					"};\r",
+					"\r",
+					"// ------------------ VALIDATORS ------------------\r",
+					"const validateAuth = ajv.compile(authSchema);\r",
+					"const validateItem = ajv.compile(itemSchema);\r",
+					"const validateList = ajv.compile(listSchema);\r",
+					"const validateMessage = ajv.compile(messageSchema);\r",
+					"const validateError = ajv.compile(errorSchema);\r",
+					"const validateHealth = ajv.compile(healthSchema);\r",
+					"\r",
+					"// ------------------ UNIVERSAL TEST ------------------\r",
+					"pm.test(\"Schema Validation (Collection Level)\", () => {\r",
+					"    const res = pm.response.json();\r",
+					"    let valid = false;\r",
+					"\r",
+					"    if (res.token && res.user) {\r",
+					"        valid = validateAuth(res);\r",
+					"        pm.expect(valid, JSON.stringify(validateAuth.errors)).to.be.true;\r",
+					"\r",
+					"    } else if (Array.isArray(res.data)) {\r",
+					"        valid = validateList(res);\r",
+					"        pm.expect(valid, JSON.stringify(validateList.errors)).to.be.true;\r",
+					"\r",
+					"    } else if (res.data && typeof res.data === \"object\") {\r",
+					"        valid = validateItem(res.data);\r",
+					"        pm.expect(valid, JSON.stringify(validateItem.errors)).to.be.true;\r",
+					"\r",
+					"    } else if (res.message) {\r",
+					"        valid = validateMessage(res);\r",
+					"        pm.expect(valid, JSON.stringify(validateMessage.errors)).to.be.true;\r",
+					"\r",
+					"    } else if (res.error) {\r",
+					"        valid = validateError(res);\r",
+					"        pm.expect(valid, JSON.stringify(validateError.errors)).to.be.true;\r",
+					"\r",
+					"    } else if (res.status) {\r",
+					"        valid = validateHealth(res);\r",
+					"        pm.expect(valid, JSON.stringify(validateHealth.errors)).to.be.true;\r",
+					"\r",
+					"    } else {\r",
+					"        pm.expect.fail(\"Response did not match any known schema\");\r",
+					"    }\r",
+					"});\r",
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "allIds",
+			"value": ""
+		},
+		{
+			"key": "max_response_time",
+			"value": ""
+		},
+		{
+			"key": "max_response_size",
+			"value": ""
+		},
+		{
+			"key": "username",
+			"value": ""
+		},
+		{
+			"key": "BaseURL",
+			"value": "",
+			"type": "default"
+		}
+	]
+}
