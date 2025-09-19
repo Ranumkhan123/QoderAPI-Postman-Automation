@@ -20,6 +20,7 @@ Qoder allowed me to create and deploy a fully functional CRUD API with authentic
 To perform these tests locally, you will need:
 
 - Install the Postman Desktop Application or the Postman CLI (Newman).
+
 - The Qoder API server is currently running against a local instance at http://localhost:3000.
 
 
@@ -148,7 +149,7 @@ Implemented at three levels: 
 
 ## API Documentation
 
-- - Swagger/OpenAPI documentation is accessible on **SwaggerHub**:
+- Swagger/OpenAPI documentation is accessible on **SwaggerHub**:
     
   👉 [Qoder API Docs](https://app.swaggerhub.com/apis-docs/ranumkhan-98c/QoderAPI-Docs/1.0.0)  
 
