@@ -45,7 +45,7 @@ The test suite is created for the **Qoder API** (based on **Qoder-The Agentic Co
 
 ## Project Structure
 
-
+```
 QoderAPI-Postman-Automation/
 │
 ├── collections/          # Exported Postman collection JSON
@@ -54,7 +54,7 @@ QoderAPI-Postman-Automation/
 ├── reports/              # Newman HTML extra reports
 ├── docs/                 # API Documentation (Swagger/OpenAPI + screenshots)
 └── README.md             # Project documentation
-
+```
 
 ----
 
@@ -148,7 +148,8 @@ Implemented at three levels: 
 
 ## API Documentation
 
-- - Swagger/OpenAPI documentation is accessible on **SwaggerHub**: 
+- - Swagger/OpenAPI documentation is accessible on **SwaggerHub**:
+    
   👉 [Qoder API Docs](https://app.swaggerhub.com/apis-docs/ranumkhan-98c/QoderAPI-Docs/1.0.0)  
 
 
